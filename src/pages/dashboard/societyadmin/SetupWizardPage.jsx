@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -19,6 +19,7 @@ import {
   IconButton,
   Divider,
 } from '@mui/material';
+import LoadingButton from '@mui/lab/LoadingButton';
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'notistack';
 import { societyAdminApi } from 'src/api/nivaasa';
@@ -60,6 +61,51 @@ export default function SetupWizardPage() {
   const [newRule, setNewRule] = useState('');
   const [newContact, setNewContact] = useState({ name: '', role: '', phone: '' });
 
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await societyAdminApi.getProfile();
+        if (res.success && res.society) {
+          const s = res.society;
+          setForm({
+            bankingInfo: {
+              bankName: s.bankingInfo?.bankName || '',
+              accountNumber: s.bankingInfo?.accountNumber || '',
+              ifscCode: s.bankingInfo?.ifscCode || '',
+              accountHolderName: s.bankingInfo?.accountHolderName || '',
+              branch: s.bankingInfo?.branch || '',
+            },
+            maintenanceSettings: {
+              frequency: s.maintenanceSettings?.frequency || 'MONTHLY',
+              billingType: s.maintenanceSettings?.billingType || 'FIXED',
+              ratePerSqFt: s.maintenanceSettings?.ratePerSqFt || 0,
+              fixedAmount: s.maintenanceSettings?.fixedAmount || 2000,
+              lateFee: s.maintenanceSettings?.lateFee || 200,
+              dueDateDays: s.maintenanceSettings?.dueDateDays || 10,
+            },
+            emergencyContacts: s.emergencyContacts && s.emergencyContacts.length > 0
+              ? s.emergencyContacts
+              : [
+                  { name: 'Society Main Gate Security', role: 'Security', phone: '9999911111' },
+                  { name: 'Surat Ambulance Service', role: 'Medical', phone: '102' },
+                ],
+            rules: s.rules && s.rules.length > 0
+              ? s.rules
+              : [
+                  'No loud music in common zones past 10 PM.',
+                  'All residents must submit vehicle details to security office.',
+                ],
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load existing society configurations', error);
+      }
+    };
+    loadProfile();
+  }, []);
+
+  const [loadingSave, setLoadingSave] = useState(false);
+
   const handleNext = () => {
     if (activeStep === STEPS.length - 1) {
       handleSave();
@@ -73,14 +119,17 @@ export default function SetupWizardPage() {
   };
 
   const handleSave = async () => {
+    setLoadingSave(true);
     try {
       const res = await societyAdminApi.setupWizard(form);
       if (res.success) {
-        enqueueSnackbar('Society wizard configuration saved!', { variant: 'success' });
+        enqueueSnackbar('Society wizard configuration saved successfully!', { variant: 'success' });
         router.push('/dashboard');
       }
     } catch (error) {
       enqueueSnackbar(error.message || 'Wizard setup failed', { variant: 'error' });
+    } finally {
+      setLoadingSave(false);
     }
   };
 
@@ -94,6 +143,16 @@ export default function SetupWizardPage() {
     if (!newContact.name || !newContact.phone) return;
     setForm({ ...form, emergencyContacts: [...form.emergencyContacts, newContact] });
     setNewContact({ name: '', role: '', phone: '' });
+  };
+
+  const removeRule = (index) => {
+    const updated = form.rules.filter((_, idx) => idx !== index);
+    setForm({ ...form, rules: updated });
+  };
+
+  const removeContact = (index) => {
+    const updated = form.emergencyContacts.filter((_, idx) => idx !== index);
+    setForm({ ...form, emergencyContacts: updated });
   };
 
   return (
@@ -204,7 +263,15 @@ export default function SetupWizardPage() {
 
             <List sx={{ mb: 3 }}>
               {form.emergencyContacts.map((c, idx) => (
-                <ListItem key={idx} sx={{ backgroundColor: '#F8FAFC', borderRadius: '8px', mb: 1 }}>
+                <ListItem
+                  key={idx}
+                  sx={{ backgroundColor: '#F8FAFC', borderRadius: '8px', mb: 1 }}
+                  secondaryAction={
+                    <IconButton edge="end" aria-label="delete" onClick={() => removeContact(idx)} color="error">
+                      <Iconify icon="solar:trash-bin-trash-bold" />
+                    </IconButton>
+                  }
+                >
                   <ListItemText primary={`${c.name} - ${c.phone}`} secondary={c.role} />
                 </ListItem>
               ))}
@@ -220,7 +287,15 @@ export default function SetupWizardPage() {
 
             <List>
               {form.rules.map((r, idx) => (
-                <ListItem key={idx} sx={{ backgroundColor: '#F8FAFC', borderRadius: '8px', mb: 1 }}>
+                <ListItem
+                  key={idx}
+                  sx={{ backgroundColor: '#F8FAFC', borderRadius: '8px', mb: 1 }}
+                  secondaryAction={
+                    <IconButton edge="end" aria-label="delete" onClick={() => removeRule(idx)} color="error">
+                      <Iconify icon="solar:trash-bin-trash-bold" />
+                    </IconButton>
+                  }
+                >
                   <ListItemText primary={`${idx + 1}. ${r}`} />
                 </ListItem>
               ))}
@@ -233,9 +308,14 @@ export default function SetupWizardPage() {
           <Button disabled={activeStep === 0} onClick={handleBack} variant="outlined">
             Back
           </Button>
-          <Button variant="contained" onClick={handleNext} sx={{ backgroundColor: '#3657D6' }}>
+          <LoadingButton
+            variant="contained"
+            onClick={handleNext}
+            loading={loadingSave}
+            sx={{ backgroundColor: '#3657D6' }}
+          >
             {activeStep === STEPS.length - 1 ? 'Finish Setup' : 'Next Step'}
-          </Button>
+          </LoadingButton>
         </Box>
       </Card>
     </Box>

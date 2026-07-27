@@ -17,10 +17,12 @@ import {
   DialogContent,
   DialogActions,
   Grid,
+  CircularProgress,
 } from '@mui/material';
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'notistack';
 import { societyAdminApi } from 'src/api/nivaasa';
+import LoadingButton from '@mui/lab/LoadingButton';
 
 export default function TowerManagementPage() {
   const { enqueueSnackbar } = useSnackbar();
@@ -38,6 +40,9 @@ export default function TowerManagementPage() {
     description: '',
     displayOrder: 0,
   });
+
+  const [loadingCreate, setLoadingCreate] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
 
   const isVilla = propertyType === 'VILLA_ROW_HOUSE';
   const labelTower = isVilla ? 'Block / Sector / Row' : 'Tower / Wing';
@@ -85,6 +90,7 @@ export default function TowerManagementPage() {
   }, [isVilla]);
 
   const handleCreate = async () => {
+    setLoadingCreate(true);
     try {
       const res = await societyAdminApi.createTower(form);
       if (res.success) {
@@ -101,6 +107,8 @@ export default function TowerManagementPage() {
       }
     } catch (error) {
       enqueueSnackbar(error.message || 'Error creating structure', { variant: 'error' });
+    } finally {
+      setLoadingCreate(false);
     }
   };
 
@@ -122,6 +130,7 @@ export default function TowerManagementPage() {
       ? 'Deleting a block will permanently delete all plots/bungalows inside it. Proceed?'
       : 'Deleting a tower will permanently delete all floors and flats inside it. Proceed?';
     if (!window.confirm(confirmMessage)) return;
+    setLoadingDelete(true);
     try {
       const res = await societyAdminApi.deleteTower(id);
       if (res.success) {
@@ -130,6 +139,8 @@ export default function TowerManagementPage() {
       }
     } catch (err) {
       enqueueSnackbar('Error deleting structure', { variant: 'error' });
+    } finally {
+      setLoadingDelete(false);
     }
   };
 
@@ -185,8 +196,8 @@ export default function TowerManagementPage() {
                           View Floors
                         </Button>
                       )}
-                      <IconButton onClick={() => handleDelete(t._id)} color="error">
-                        <Iconify icon="solar:trash-bin-trash-bold" />
+                      <IconButton onClick={() => handleDelete(t._id)} color="error" disabled={loadingDelete}>
+                        {loadingDelete ? <CircularProgress size={20} /> : <Iconify icon="solar:trash-bin-trash-bold" />}
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -221,11 +232,11 @@ export default function TowerManagementPage() {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ borderTop: '1px solid #E5EAF2', p: 2 }}>
+         <DialogActions sx={{ borderTop: '1px solid #E5EAF2', p: 2 }}>
           <Button onClick={() => setOpenCreate(false)} variant="outlined">Cancel</Button>
-          <Button onClick={handleCreate} variant="contained" sx={{ backgroundColor: '#3657D6' }}>
-            Create {isVilla ? 'Block' : 'Building'}
-          </Button>
+          <LoadingButton onClick={handleCreate} loading={loadingCreate} variant="contained" sx={{ backgroundColor: '#3657D6' }}>
+            Creating...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
 

@@ -30,6 +30,8 @@ import {
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'notistack';
 import { societyAdminApi } from 'src/api/nivaasa';
+import LoadingButton from '@mui/lab/LoadingButton';
+import CircularProgress from '@mui/material/CircularProgress';
 
 export default function ResidentsPage() {
   const { enqueueSnackbar } = useSnackbar();
@@ -38,6 +40,13 @@ export default function ResidentsPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [currentTab, setCurrentTab] = useState('list');
   const [vehicles, setVehicles] = useState([]);
+  
+  const [loadingCreate, setLoadingCreate] = useState(false);
+  const [loadingUpdate, setLoadingUpdate] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
+  const [loadingVehicle, setLoadingVehicle] = useState(false);
+  const [loadingEditVehicle, setLoadingEditVehicle] = useState(false);
+  const [loadingDeleteVehicle, setLoadingDeleteVehicle] = useState(false);
   
   // Registration forms
   const [form, setForm] = useState({
@@ -158,6 +167,7 @@ export default function ResidentsPage() {
   };
 
   const handleUpdateResident = async () => {
+    setLoadingUpdate(true);
     try {
       const res = await societyAdminApi.updateResident(editingResidentId, editResidentForm);
       if (res.success) {
@@ -167,10 +177,13 @@ export default function ResidentsPage() {
       }
     } catch (error) {
       enqueueSnackbar(error.message || 'Error updating resident', { variant: 'error' });
+    } finally {
+      setLoadingUpdate(false);
     }
   };
 
   const handleDeleteResident = async (id) => {
+    setLoadingDelete(true);
     try {
       const res = await societyAdminApi.deleteResident(id);
       if (res.success) {
@@ -179,6 +192,9 @@ export default function ResidentsPage() {
       }
     } catch (error) {
       enqueueSnackbar(error.message || 'Error deleting resident', { variant: 'error' });
+    } finally {
+      setLoadingDelete(false);
+      setDeleteResidentConfirmId(null);
     }
   };
 
@@ -198,6 +214,7 @@ export default function ResidentsPage() {
   };
 
   const handleUpdateVehicle = async () => {
+    setLoadingEditVehicle(true);
     try {
       const res = await societyAdminApi.updateVehicle(editingVehicleId, editVehicleForm);
       if (res.success) {
@@ -207,10 +224,13 @@ export default function ResidentsPage() {
       }
     } catch (error) {
       enqueueSnackbar(error.message || 'Error updating vehicle', { variant: 'error' });
+    } finally {
+      setLoadingEditVehicle(false);
     }
   };
 
   const handleDeleteVehicle = async (id) => {
+    setLoadingDeleteVehicle(true);
     try {
       const res = await societyAdminApi.deleteVehicle(id);
       if (res.success) {
@@ -219,10 +239,14 @@ export default function ResidentsPage() {
       }
     } catch (error) {
       enqueueSnackbar(error.message || 'Error deleting vehicle', { variant: 'error' });
+    } finally {
+      setLoadingDeleteVehicle(false);
+      setDeleteVehicleConfirmId(null);
     }
   };
 
   const handleOnboard = async () => {
+    setLoadingCreate(true);
     try {
       const res = await societyAdminApi.onboardResident(form);
       if (res.success) {
@@ -244,6 +268,8 @@ export default function ResidentsPage() {
       }
     } catch (error) {
       enqueueSnackbar(error.message || 'Error onboarding resident', { variant: 'error' });
+    } finally {
+      setLoadingCreate(false);
     }
   };
 
@@ -262,6 +288,7 @@ export default function ResidentsPage() {
   };
 
   const handleRegisterVehicle = async () => {
+    setLoadingVehicle(true);
     try {
       const res = await societyAdminApi.registerVehicle(vehicleForm);
       if (res.success) {
@@ -271,6 +298,8 @@ export default function ResidentsPage() {
       }
     } catch (error) {
       enqueueSnackbar(error.message || 'Error registering vehicle', { variant: 'error' });
+    } finally {
+      setLoadingVehicle(false);
     }
   };
 
@@ -486,7 +515,9 @@ export default function ResidentsPage() {
         </DialogContent>
         <DialogActions sx={{ borderTop: '1px solid #E5EAF2', p: 2 }}>
           <Button onClick={() => setOpenCreate(false)} variant="outlined">Cancel</Button>
-          <Button onClick={handleOnboard} variant="contained" sx={{ backgroundColor: '#3657D6' }}>Onboard resident</Button>
+          <LoadingButton onClick={handleOnboard} loading={loadingCreate} variant="contained" sx={{ backgroundColor: '#3657D6' }}>
+            Onboarding...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
 
@@ -525,7 +556,9 @@ export default function ResidentsPage() {
         </DialogContent>
         <DialogActions sx={{ borderTop: '1px solid #E5EAF2', p: 2 }}>
           <Button onClick={() => setOpenVehicle(false)} variant="outlined">Cancel</Button>
-          <Button onClick={handleRegisterVehicle} variant="contained" sx={{ backgroundColor: '#3657D6' }}>Register Vehicle</Button>
+          <LoadingButton onClick={handleRegisterVehicle} loading={loadingVehicle} variant="contained" sx={{ backgroundColor: '#3657D6' }}>
+            Registering...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
 
@@ -602,7 +635,9 @@ export default function ResidentsPage() {
         </DialogContent>
         <DialogActions sx={{ borderTop: '1px solid #E5EAF2', p: 2 }}>
           <Button onClick={() => setOpenEditResident(false)} variant="outlined">Cancel</Button>
-          <Button onClick={handleUpdateResident} variant="contained" sx={{ backgroundColor: '#3657D6' }}>Update Resident</Button>
+          <LoadingButton onClick={handleUpdateResident} loading={loadingUpdate} variant="contained" sx={{ backgroundColor: '#3657D6' }}>
+            Updating...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
 
@@ -630,18 +665,16 @@ export default function ResidentsPage() {
           <Button onClick={() => setDeleteResidentConfirmId(null)} variant="outlined" fullWidth sx={{ borderRadius: '12px' }}>
             Cancel
           </Button>
-          <Button
-            onClick={() => {
-              handleDeleteResident(deleteResidentConfirmId);
-              setDeleteResidentConfirmId(null);
-            }}
+          <LoadingButton
+            onClick={() => handleDeleteResident(deleteResidentConfirmId)}
+            loading={loadingDelete}
             variant="contained"
             color="error"
             fullWidth
             sx={{ borderRadius: '12px', backgroundColor: '#EF4444', '&:hover': { backgroundColor: '#DC2626' } }}
           >
-            Permanently Delete
-          </Button>
+            Deleting...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
 
@@ -680,7 +713,9 @@ export default function ResidentsPage() {
         </DialogContent>
         <DialogActions sx={{ borderTop: '1px solid #E5EAF2', p: 2 }}>
           <Button onClick={() => setOpenEditVehicle(false)} variant="outlined">Cancel</Button>
-          <Button onClick={handleUpdateVehicle} variant="contained" sx={{ backgroundColor: '#3657D6' }}>Update Vehicle</Button>
+          <LoadingButton onClick={handleUpdateVehicle} loading={loadingEditVehicle} variant="contained" sx={{ backgroundColor: '#3657D6' }}>
+            Updating...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
 
@@ -708,18 +743,16 @@ export default function ResidentsPage() {
           <Button onClick={() => setDeleteVehicleConfirmId(null)} variant="outlined" fullWidth sx={{ borderRadius: '12px' }}>
             Cancel
           </Button>
-          <Button
-            onClick={() => {
-              handleDeleteVehicle(deleteVehicleConfirmId);
-              setDeleteVehicleConfirmId(null);
-            }}
+          <LoadingButton
+            onClick={() => handleDeleteVehicle(deleteVehicleConfirmId)}
+            loading={loadingDeleteVehicle}
             variant="contained"
             color="error"
             fullWidth
             sx={{ borderRadius: '12px', backgroundColor: '#EF4444', '&:hover': { backgroundColor: '#DC2626' } }}
           >
-            Permanently Delete
-          </Button>
+            Deleting...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
     </Box>

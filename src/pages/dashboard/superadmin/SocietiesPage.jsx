@@ -27,6 +27,7 @@ import {
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'notistack';
 import { superAdminApi } from 'src/api/nivaasa';
+import LoadingButton from '@mui/lab/LoadingButton';
 
 export default function SocietiesPage() {
   const { enqueueSnackbar } = useSnackbar();
@@ -35,7 +36,6 @@ export default function SocietiesPage() {
   const [status, setStatus] = useState('');
   const [plan, setPlan] = useState('');
   
-  // Dialog controls
   const [openCreate, setOpenCreate] = useState(false);
   const [selectedSociety, setSelectedSociety] = useState(null);
   const [openDetail, setOpenDetail] = useState(false);
@@ -43,6 +43,9 @@ export default function SocietiesPage() {
   const [createdAdminCredentials, setCreatedAdminCredentials] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [deleteConfirmName, setDeleteConfirmName] = useState('');
+  
+  const [loadingCreate, setLoadingCreate] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
   
   // Form fields
   const [form, setForm] = useState({
@@ -84,6 +87,7 @@ export default function SocietiesPage() {
   }, [search, status, plan]);
 
   const handleCreate = async () => {
+    setLoadingCreate(true);
     try {
       const res = await superAdminApi.createSociety(form);
       if (res.success) {
@@ -120,6 +124,8 @@ export default function SocietiesPage() {
       }
     } catch (error) {
       enqueueSnackbar(error.message || 'Error creating society', { variant: 'error' });
+    } finally {
+      setLoadingCreate(false);
     }
   };
 
@@ -150,6 +156,7 @@ export default function SocietiesPage() {
   };
 
   const handleDelete = async (id) => {
+    setLoadingDelete(true);
     try {
       const res = await superAdminApi.deleteSociety(id);
       if (res.success) {
@@ -158,6 +165,9 @@ export default function SocietiesPage() {
       }
     } catch (error) {
       enqueueSnackbar('Error deleting society', { variant: 'error' });
+    } finally {
+      setLoadingDelete(false);
+      setDeleteConfirmId(null);
     }
   };
 
@@ -373,7 +383,9 @@ export default function SocietiesPage() {
         </DialogContent>
         <DialogActions sx={{ borderTop: '1px solid #E5EAF2', p: 2 }}>
           <Button onClick={() => setOpenCreate(false)} variant="outlined" sx={{ borderRadius: '8px' }}>Cancel</Button>
-          <Button onClick={handleCreate} variant="contained" sx={{ backgroundColor: '#3657D6', '&:hover': { backgroundColor: '#2748C9' }, borderRadius: '8px' }}>Create & Invite</Button>
+          <LoadingButton onClick={handleCreate} loading={loadingCreate} variant="contained" sx={{ backgroundColor: '#3657D6', '&:hover': { backgroundColor: '#2748C9' }, borderRadius: '8px' }}>
+            Creating...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
 
@@ -490,18 +502,16 @@ export default function SocietiesPage() {
           <Button onClick={() => setDeleteConfirmId(null)} variant="outlined" fullWidth sx={{ borderRadius: '12px' }}>
             Cancel
           </Button>
-          <Button
-            onClick={() => {
-              handleDelete(deleteConfirmId);
-              setDeleteConfirmId(null);
-            }}
+          <LoadingButton
+            onClick={() => handleDelete(deleteConfirmId)}
+            loading={loadingDelete}
             variant="contained"
             color="error"
             fullWidth
             sx={{ borderRadius: '12px', backgroundColor: '#EF4444', '&:hover': { backgroundColor: '#DC2626' } }}
           >
-            Permanently Delete
-          </Button>
+            Deleting...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
     </Box>

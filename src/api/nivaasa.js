@@ -188,8 +188,28 @@ export const societyAdminApi = {
     const res = await axios.post('/api/society-admin/bills/generate', data);
     return res.data;
   },
-  getBills: async () => {
-    const res = await axios.get('/api/society-admin/bills');
+  getBills: async (params) => {
+    const res = await axios.get('/api/society-admin/bills', { params });
+    return res.data;
+  },
+  updateMaintenanceBill: async (id, data) => {
+    const res = await axios.put(`/api/society-admin/bills/${id}`, data);
+    return res.data;
+  },
+  deleteMaintenanceBill: async (id) => {
+    const res = await axios.delete(`/api/society-admin/bills/${id}`);
+    return res.data;
+  },
+  updateMaintenanceBatch: async (batchId, data) => {
+    const res = await axios.put(`/api/society-admin/bills/batches/${batchId}`, data);
+    return res.data;
+  },
+  deleteMaintenanceBatch: async (batchId) => {
+    const res = await axios.delete(`/api/society-admin/bills/batches/${batchId}`);
+    return res.data;
+  },
+  updateBillStatus: async (id, status) => {
+    const res = await axios.put(`/api/society-admin/bills/${id}/status`, { status });
     return res.data;
   },
   recordPayment: async (billId, data) => {

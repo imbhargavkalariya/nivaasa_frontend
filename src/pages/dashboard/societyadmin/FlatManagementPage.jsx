@@ -26,6 +26,8 @@ import {
 import Iconify from 'src/components/iconify';
 import { useSnackbar } from 'notistack';
 import { societyAdminApi } from 'src/api/nivaasa';
+import LoadingButton from '@mui/lab/LoadingButton';
+import CircularProgress from '@mui/material/CircularProgress';
 
 export default function FlatManagementPage() {
   const { enqueueSnackbar } = useSnackbar();
@@ -53,6 +55,11 @@ export default function FlatManagementPage() {
 
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [deleteConfirmNumber, setDeleteConfirmNumber] = useState('');
+
+  const [loadingCreate, setLoadingCreate] = useState(false);
+  const [loadingBulk, setLoadingBulk] = useState(false);
+  const [loadingUpdate, setLoadingUpdate] = useState(false);
+  const [loadingDelete, setLoadingDelete] = useState(false);
 
   const [form, setForm] = useState({
     towerId: '',
@@ -190,6 +197,7 @@ export default function FlatManagementPage() {
   };
 
   const handleUpdate = async () => {
+    setLoadingUpdate(true);
     try {
       const res = await societyAdminApi.updateFlat(editingFlatId, editForm);
       if (res.success) {
@@ -199,10 +207,13 @@ export default function FlatManagementPage() {
       }
     } catch (error) {
       enqueueSnackbar(error.message || 'Error updating property', { variant: 'error' });
+    } finally {
+      setLoadingUpdate(false);
     }
   };
 
   const handleDelete = async (id) => {
+    setLoadingDelete(true);
     try {
       const res = await societyAdminApi.deleteFlat(id);
       if (res.success) {
@@ -211,10 +222,14 @@ export default function FlatManagementPage() {
       }
     } catch (error) {
       enqueueSnackbar(error.message || 'Error deleting property', { variant: 'error' });
+    } finally {
+      setLoadingDelete(false);
+      setDeleteConfirmId(null);
     }
   };
 
   const handleCreate = async () => {
+    setLoadingCreate(true);
     try {
       const res = await societyAdminApi.createFlat(form);
       if (res.success) {
@@ -234,10 +249,13 @@ export default function FlatManagementPage() {
       }
     } catch (error) {
       enqueueSnackbar(error.message || 'Error creating property', { variant: 'error' });
+    } finally {
+      setLoadingCreate(false);
     }
   };
 
   const handleBulkGenerate = async () => {
+    setLoadingBulk(true);
     try {
       const res = await societyAdminApi.bulkGenerateFlats(bulkForm);
       if (res.success) {
@@ -253,6 +271,8 @@ export default function FlatManagementPage() {
       }
     } catch (err) {
       enqueueSnackbar(err.message || 'Error generating properties', { variant: 'error' });
+    } finally {
+      setLoadingBulk(false);
     }
   };
 
@@ -417,7 +437,9 @@ export default function FlatManagementPage() {
         </DialogContent>
         <DialogActions sx={{ borderTop: '1px solid #E5EAF2', p: 2 }}>
           <Button onClick={() => setOpenCreate(false)} variant="outlined">Cancel</Button>
-          <Button onClick={handleCreate} variant="contained" sx={{ backgroundColor: '#3657D6' }}>Register Unit</Button>
+          <LoadingButton onClick={handleCreate} loading={loadingCreate} variant="contained" sx={{ backgroundColor: '#3657D6' }}>
+            Registering...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
 
@@ -474,9 +496,9 @@ export default function FlatManagementPage() {
         </DialogContent>
         <DialogActions sx={{ borderTop: '1px solid #E5EAF2', p: 2 }}>
           <Button onClick={() => setOpenBulk(false)} variant="outlined">Cancel</Button>
-          <Button onClick={handleBulkGenerate} variant="contained" sx={{ backgroundColor: '#3657D6' }}>
-            Generate Units
-          </Button>
+          <LoadingButton onClick={handleBulkGenerate} loading={loadingBulk} variant="contained" sx={{ backgroundColor: '#3657D6' }}>
+            Generating...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
 
@@ -568,7 +590,9 @@ export default function FlatManagementPage() {
         </DialogContent>
         <DialogActions sx={{ borderTop: '1px solid #E5EAF2', p: 2 }}>
           <Button onClick={() => setOpenEdit(false)} variant="outlined">Cancel</Button>
-          <Button onClick={handleUpdate} variant="contained" sx={{ backgroundColor: '#3657D6' }}>Update Property</Button>
+          <LoadingButton onClick={handleUpdate} loading={loadingUpdate} variant="contained" sx={{ backgroundColor: '#3657D6' }}>
+            Updating...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
 
@@ -596,18 +620,16 @@ export default function FlatManagementPage() {
           <Button onClick={() => setDeleteConfirmId(null)} variant="outlined" fullWidth sx={{ borderRadius: '12px' }}>
             Cancel
           </Button>
-          <Button
-            onClick={() => {
-              handleDelete(deleteConfirmId);
-              setDeleteConfirmId(null);
-            }}
+          <LoadingButton
+            onClick={() => handleDelete(deleteConfirmId)}
+            loading={loadingDelete}
             variant="contained"
             color="error"
             fullWidth
             sx={{ borderRadius: '12px', backgroundColor: '#EF4444', '&:hover': { backgroundColor: '#DC2626' } }}
           >
-            Permanently Delete
-          </Button>
+            Deleting...
+          </LoadingButton>
         </DialogActions>
       </Dialog>
     </Box>
