@@ -137,6 +137,13 @@ export default function OverviewAppPage() {
         <Typography variant="h4" sx={{ fontWeight: '700', mb: 0.5, color: '#1F2937' }}>
           Welcome back, {user?.name || 'User'}
         </Typography>
+
+        {(role === 'ADMIN' || role === 'MEMBER') && user?.societyName && (
+          <Typography variant="h6" sx={{ color: '#3657D6', fontWeight: '600', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+            🏠 {user.societyName}
+          </Typography>
+        )}
+
         <Typography variant="body2" sx={{ color: 'text.secondary', mb: 4 }}>
           Role: <Chip label={role.replace('_', ' ')} size="small" color="primary" sx={{ fontWeight: 'bold' }} />
         </Typography>
